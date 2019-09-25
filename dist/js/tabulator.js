@@ -203,6 +203,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		this.scrollLeft = 0;
 
 		this.element.insertBefore(this.headersElement, this.element.firstChild);
+
 	};
 
 	////////////// Setup Functions /////////////////
@@ -294,9 +295,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 
 	ColumnManager.prototype.scrollHorizontal = function (left) {
-
-		var hozAdjust = 0,
-		    scrollWidth = this.element.scrollWidth - this.table.element.clientWidth;
+		// if changed it's gonna break scrolling all together!
+		var hozAdjust = 0, scrollWidth = this.element.scrollWidth - this.table.element.clientWidth;
 
 		// this.tempScrollBlock();
 
@@ -310,7 +310,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			hozAdjust = left - scrollWidth;
 
+			// Tyler: adjusted to correct the initial top left starting block state
 			this.element.style.marginLeft = -hozAdjust + "px";
+			//this.element.style.marginLeft = 0;
 		} else {
 
 			this.element.style.marginLeft = 0;
@@ -321,13 +323,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		//this._calcFrozenColumnsPos(hozAdjust + 3);
 
-
 		this.scrollLeft = left;
 
-		if (this.table.modExists("frozenColumns")) {
+		/*if (this.table.modExists("frozenColumns")) {
 
 			this.table.modules.frozenColumns.scrollHorizontal();
-		}
+		}*/
 	};
 
 	///////////// Column Setup Functions /////////////
@@ -426,7 +427,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		//reset frozen columns
 
-
 		if (self.table.modExists("frozenColumns")) {
 
 			self.table.modules.frozenColumns.reset();
@@ -512,7 +512,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	};
 
 	//ensure column headers take up the correct amount of space in column groups
-
 
 	ColumnManager.prototype._verticalAlignHeaders = function () {
 
@@ -2787,28 +2786,47 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		//scroll header along with table body
 
 		self.element.addEventListener("scroll", function () {
-
 			var left = self.element.scrollLeft;
 
+			//console.log(self.columnManager.waiting);
 			//handle horizontal scrolling
 
-			if (self.scrollLeft != left) {
+			//console.log(left);
+			// tyler: (attempt 1) just move all left columns left with class = "tabulator-frozen-left"
+			// result: this was no better, it's the number of loops it has to make is too expensive resource wise, setting them all to fixed worked though
+			/*var x = document.getElementsByClassName("tabulator-frozen-left");
+			for (var i = 0; i < x.length; i++) {
+				x[i].style.position = "sticky";
+			}
 
-				self.columnManager.scrollHorizontal(left);
+			var top = self.element.scrollTop;
+			console.log(top);*/
+
+
+
+			if (self.scrollLeft != left) {
+				//self.columnManager.scrollHorizontal(left);
+				// tyler: find a better way to move headers todo 9/25/19
+				console.log(left);
+				//tabulator-headers
+				var x = document.getElementsByClassName("tabulator-headers");
+				//x[0].style.left = "-"+left+"px";
 
 				if (self.table.options.groupBy) {
 
-					self.table.modules.groupRows.scrollHeaders(left);
+					//self.table.modules.groupRows.scrollHeaders(left);
 				}
 
 				if (self.table.modExists("columnCalcs")) {
 
-					self.table.modules.columnCalcs.scrollHorizontal(left);
+					//self.table.modules.columnCalcs.scrollHorizontal(left);
 				}
 			}
 
 			self.scrollLeft = left;
 		});
+
+
 
 		//handle virtual dom scrolling
 
@@ -16598,6 +16616,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	//calculate margins for rows
 	FrozenColumns.prototype.calcMargins = function () {
 		this.leftMargin = this._calcSpace(this.leftColumns, this.leftColumns.length) + "px";
+		// Tyler: removed to fix top headers offset by too much
+		// above made obsolete when I had to make corner control fixed
 		this.table.columnManager.headersElement.style.marginLeft = this.leftMargin;
 
 		this.rightMargin = this._calcSpace(this.rightColumns, this.rightColumns.length) + "px";
@@ -16700,7 +16720,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		var rowEl = row.getElement();
 
-		rowEl.style.paddingLeft = this.leftMargin;
+		//rowEl.style.paddingLeft = this.leftMargin;
 		// rowEl.style.paddingRight = this.rightMargin + "px";
 
 		this.leftColumns.forEach(function (column) {
@@ -16721,10 +16741,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	};
 
 	FrozenColumns.prototype.layoutElement = function (element, column) {
-
 		if (column.modules.frozen) {
-			element.style.position = "absolute";
-			element.style.left = column.modules.frozen.margin;
+			// Tyler: removed the margin to fix start positioning and the position to sticky via css
+			//element.style.position = "abslolute";
+			//element.style.left = column.modules.frozen.margin;
+			element.style.left = 0;
 
 			element.classList.add("tabulator-frozen");
 
